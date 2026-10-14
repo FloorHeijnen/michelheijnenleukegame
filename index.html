@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cel-Avontuur: Levels & Organellen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes pulseGlow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.6)); }
+            50% { filter: drop-shadow(0 0 20px rgba(52, 211, 153, 0.9)); }
+        }
+        .animate-glow { animation: pulseGlow 3s infinite ease-in-out; }
+        .organelle-node { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .organelle-node:hover { transform: scale(1.08); filter: brightness(1.2); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+
+    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-500 text-slate-950 font-black p-2 rounded-xl text-xl shadow-lg shadow-emerald-500/20">🧬</div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Cel-Avontuur Biologie</h1>
+                    <p class="text-xs text-slate-400">Levelsysteem: Beheers alle celstructuren</p>
+                </div>
+            </div>
+            
+            <!-- Game Stats / Meters -->
+            <div class="flex items-center gap-4 bg-slate-950/60 px-4 py-2 rounded-2xl border border-slate-800 text-sm">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-yellow-400 font-bold">⚡ ATP:</span>
+                    <span id="atp-display" class="font-mono text-emerald-400 font-bold">100</span>
+                </div>
+                <div class="h-4 w-px bg-slate-800"></div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-cyan-400 font-bold">🏆 Score:</span>
+                    <span id="score-display" class="font-mono text-cyan-400 font-bold">0</span>
+                </div>
+                <div class="h-4 w-px bg-slate-800"></div>
+                <button onclick="resetGameStats()" class="text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-lg text-slate-300 transition">Reset</button>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="max-w-7xl mx-auto px-4 flex space-x-2 border-t border-slate-800/60 overflow-x-auto py-2">
+            <button onclick="switchTab('explorer')" id="btn-explorer" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">🎯 Levels & Cel</button>
+            <button onclick="switchTab('minigame')" id="btn-minigame" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">⚡ Energie Fabriek (Bonus)</button>
+            <button onclick="switchTab('quiz')" id="btn-quiz" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">📝 Examen Quiz</button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- LEVEL SELECTION BAR -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-3">
+                <div>
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Voortgang & Levels</h3>
+                    <p id="current-level-title" class="text-lg font-bold text-white">Level 1: De Dierlijke Cel</p>
+                </div>
+                <span id="level-status-badge" class="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full text-xs font-semibold">Actief Level</span>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <button onclick="selectLevel(1)" id="lvl-btn-1" class="level-card text-left p-3 rounded-xl border border-emerald-500 bg-emerald-500/10 transition">
+                    <div class="text-xs text-emerald-400 font-bold">LEVEL 1</div>
+                    <div class="text-sm font-semibold text-white">Dierlijke Cel</div>
+                    <div class="text-xs text-slate-400 mt-1">Verken de basisstructuur</div>
+                </button>
+                <button onclick="selectLevel(2)" id="lvl-btn-2" class="level-card text-left p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 transition opacity-75">
+                    <div class="text-xs text-cyan-400 font-bold">LEVEL 2</div>
+                    <div class="text-sm font-semibold text-white">Functies (Dier)</div>
+                    <div class="text-xs text-slate-400 mt-1">Test organel functies</div>
+                </button>
+                <button onclick="selectLevel(3)" id="lvl-btn-3" class="level-card text-left p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 transition opacity-75">
+                    <div class="text-xs text-emerald-400 font-bold">LEVEL 3</div>
+                    <div class="text-sm font-semibold text-white">Planten Cel</div>
+                    <div class="text-xs text-slate-400 mt-1">Celwand & Vacuole</div>
+                </button>
+                <button onclick="selectLevel(4)" id="lvl-btn-4" class="level-card text-left p-3 rounded-xl border border-slate-800 bg-slate-950 hover:border-slate-700 transition opacity-75">
+                    <div class="text-xs text-cyan-400 font-bold">LEVEL 4</div>
+                    <div class="text-sm font-semibold text-white">Functies (Planten)</div>
+                    <div class="text-xs text-slate-400 mt-1">Fotosynthese & Chloroplasten</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 1: CEL VERKENNER & LEVEL MODULE -->
+        <section id="tab-explorer" class="space-y-6">
+            <div class="bg-gradient-to-br from-slate-900 to-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                <div id="level-instruction-banner" class="mb-4 bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">💡</span>
+                        <div>
+                            <h4 id="banner-title" class="text-sm font-bold text-emerald-300">Opdracht Level 1</h4>
+                            <p id="banner-desc" class="text-xs text-slate-300">Klik op alle organellen in de dierlijke cel om de basisstructuur te begrijpen.</p>
+                        </div>
+                    </div>
+                    <button onclick="completeCurrentLevel()" id="complete-level-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition shadow">Voltooi Level ✓</button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- SVG Interactive Cell Graphic -->
+                    <div class="lg:col-span-7 flex justify-center bg-slate-950/70 p-6 rounded-2xl border border-slate-800/80 relative min-h-[380px] sm:min-h-[440px] flex items-center justify-center">
+                        <svg viewBox="0 0 500 400" class="w-full max-w-[480px] h-auto animate-glow" id="cell-svg">
+                            <!-- Cell Wall (Plant Only) -->
+                            <g id="cell-wall-group" style="display: none;">
+                                <rect x="25" y="15" width="450" height="370" rx="100" fill="none" stroke="#10b981" stroke-width="8" stroke-dasharray="4 4" opacity="0.6"/>
+                            </g>
+                            <!-- Cell Membrane -->
+                            <rect x="40" y="25" width="420" height="350" rx="90" fill="#065f46" fill-opacity="0.25" stroke="#34d399" stroke-width="4" class="organelle-node" onclick="selectOrganelle('membrane')"/>
+                            
+                            <text x="60" y="60" fill="#34d399" opacity="0.4" font-size="12" font-weight="bold">Cytoplasma</text>
+
+                            <!-- Vacuole -->
+                            <g id="vacuole-group" class="organelle-node" onclick="selectOrganelle('vacuole')">
+                                <ellipse cx="150" cy="200" rx="60" ry="80" fill="#0284c7" fill-opacity="0.4" stroke="#38bdf8" stroke-width="3"/>
+                                <text x="125" y="200" fill="#e0f2fe" font-size="11" font-weight="600">Vacuole</text>
+                            </g>
+
+                            <!-- Chloroplasts (Plant Only) -->
+                            <g id="chloroplasts-group" style="display: none;">
+                                <ellipse cx="100" cy="100" rx="25" ry="15" fill="#059669" stroke="#34d399" stroke-width="2" class="organelle-node" onclick="selectOrganelle('chloroplast')"/>
+                                <ellipse cx="380" cy="110" rx="25" ry="15" fill="#059669" stroke="#34d399" stroke-width="2" class="organelle-node" onclick="selectOrganelle('chloroplast')"/>
+                                <ellipse cx="320" cy="300" rx="25" ry="15" fill="#059669" stroke="#34d399" stroke-width="2" class="organelle-node" onclick="selectOrganelle('chloroplast')"/>
+                            </g>
+
+                            <!-- Mitochondria -->
+                            <g class="organelle-node" onclick="selectOrganelle('mitochondria')">
+                                <ellipse cx="360" cy="200" rx="35" ry="18" fill="#d97706" stroke="#ffb703" stroke-width="2" transform="rotate(30 360 200)"/>
+                                <path d="M 345 195 Q 360 215 375 195" fill="none" stroke="#fff" stroke-width="2" opacity="0.7"/>
+                                <text x="330" y="235" fill="#fef08a" font-size="11" font-weight="600">Mitochondrium</text>
+                            </g>
+                            
+                            <g class="organelle-node" onclick="selectOrganelle('mitochondria')">
+                                <ellipse cx="180" cy="310" rx="30" ry="15" fill="#d97706" stroke="#ffb703" stroke-width="2" transform="rotate(-20 180 310)"/>
+                            </g>
+
+                            <!-- Nucleus -->
+                            <g class="organelle-node" onclick="selectOrganelle('nucleus')">
+                                <circle cx="280" cy="160" r="55" fill="#8b5cf6" fill-opacity="0.6" stroke="#c084fc" stroke-width="3"/>
+                                <circle cx="270" cy="150" r="15" fill="#6d28d9"/>
+                                <text x="250" y="165" fill="#f3e8ff" font-size="12" font-weight="bold">Celkern</text>
+                            </g>
+
+                            <!-- Ribosomes & ER -->
+                            <g class="organelle-node" onclick="selectOrganelle('ribosomes')">
+                                <path d="M 210 120 Q 230 100 240 130 T 220 150" fill="none" stroke="#fb7185" stroke-width="4" stroke-linecap="round"/>
+                                <circle cx="215" cy="115" r="3" fill="#fff"/>
+                                <circle cx="230" cy="125" r="3" fill="#fff"/>
+                                <circle cx="225" cy="140" r="3" fill="#fff"/>
+                                <text x="180" y="90" fill="#fda4af" font-size="11" font-weight="600">ER & Ribosomen</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Organelle Information Card -->
+                    <div class="lg:col-span-5 bg-slate-950 border border-slate-800/80 p-6 rounded-2xl flex flex-col justify-between shadow-inner min-h-[380px]">
+                        <div id="organelle-info">
+                            <div class="flex items-center gap-3 mb-4">
+                                <span id="info-icon" class="text-3xl p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">🧬</span>
+                                <div>
+                                    <h3 id="info-title" class="text-xl font-bold text-white">Selecteer een organel</h3>
+                                    <span id="info-tag" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">Celbiologie</span>
+                                </div>
+                            </div>
+                            <p id="info-desc" class="text-slate-300 text-sm leading-relaxed mb-6">
+                                Klik op een organel in de cel om de biologische functie te bestuderen. Dit helpt je om de levels te voltooien!
+                            </p>
+                            <div class="space-y-2 border-t border-slate-900 pt-4">
+                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Biologisch weetje:</div>
+                                <p id="info-fact" class="text-xs text-emerald-400 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
+                                    Elk organel heeft een unieke taak in de celstofwisseling.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-slate-900 flex justify-between items-center text-xs text-slate-400">
+                            <span id="exploration-counter">Bekeken organellen: 0/4</span>
+                            <button onclick="claimOrganelleBonus()" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-3 py-1.5 rounded-lg border border-emerald-500/30 transition font-medium">✨ Kennisbonus (+10 ATP)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: MINI-GAME (ENERGIE FABRIEK) -->
+        <section id="tab-minigame" class="hidden space-y-6">
+            <div class="bg-gradient-to-br from-slate-900 to-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+                <div class="max-w-2xl mx-auto text-center space-y-3 mb-8">
+                    <h2 class="text-2xl font-bold text-white">⚡ Energie Fabriek: Cel Gezondheid</h2>
+                    <p class="text-slate-400 text-sm">
+                        Verzamel glucose en vernietig virussen om extra ATP te verdienen voor je biologietest.
+                    </p>
+                    <div class="flex justify-center gap-4 text-sm font-semibold">
+                        <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">Cel Gezondheid: <span id="game-health" class="text-emerald-400">100</span>%</div>
+                        <div class="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">Tijd over: <span id="game-timer" class="text-cyan-400">30</span>s</div>
+                    </div>
+                </div>
+
+                <div id="game-arena" class="bg-slate-950 border border-slate-800 rounded-2xl h-80 relative overflow-hidden flex flex-col items-center justify-center p-6 text-center shadow-inner">
+                    <div id="game-start-screen" class="space-y-4">
+                        <div class="text-5xl">⚡</div>
+                        <h3 class="text-xl font-bold text-white">Start de Energie Fabriek</h3>
+                        <p class="text-slate-400 text-xs max-w-md mx-auto">Klik op glucose (🍬) en vernietig virussen (🦠)!</p>
+                        <button onclick="startMiniGame()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-emerald-500/30">Start Missie</button>
+                    </div>
+
+                    <div id="game-play-area" class="hidden w-full h-full relative cursor-crosshair"></div>
+
+                    <div id="game-over-screen" class="hidden space-y-4">
+                        <div id="game-result-icon" class="text-5xl">🏆</div>
+                        <h3 id="game-result-title" class="text-xl font-bold text-white">Missie Voltooid!</h3>
+                        <p id="game-result-desc" class="text-slate-300 text-sm">Je hebt ATP verzameld.</p>
+                        <button onclick="startMiniGame()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2 rounded-xl transition">Opnieuw Spelen</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: QUIZ -->
+        <section id="tab-quiz" class="hidden space-y-6">
+            <div class="bg-gradient-to-br from-slate-900 to-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-3xl mx-auto">
+                <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Biologie Examen Quiz</h2>
+                        <p class="text-slate-400 text-sm">Test al je kennis over dierlijke en plantencellen.</p>
+                    </div>
+                    <div class="text-sm bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 font-mono text-emerald-400">
+                        Vraag <span id="quiz-current">1</span> / <span id="quiz-total">5</span>
+                    </div>
+                </div>
+
+                <div id="quiz-container" class="space-y-6">
+                    <h3 id="quiz-question" class="text-lg font-semibold text-white"></h3>
+                    <div id="quiz-options" class="grid grid-cols-1 gap-3"></div>
+                    <div id="quiz-feedback" class="hidden p-4 rounded-xl text-sm font-medium"></div>
+                    <div class="flex justify-end pt-4">
+                        <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition shadow-lg shadow-emerald-500/20">Volgende Vraag →</button>
+                    </div>
+                </div>
+
+                <div id="quiz-complete" class="hidden text-center space-y-4 py-8">
+                    <div class="text-6xl">🌟</div>
+                    <h3 class="text-2xl font-bold text-white">Examen Afgerond!</h3>
+                    <p id="quiz-final-score" class="text-slate-300 text-sm"></p>
+                    <button onclick="restartQuiz()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition">Quiz Opnieuw</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 id="modal-title" class="text-lg font-bold text-white">Melding</h3>
+            <p id="modal-message" class="text-slate-300 text-sm"></p>
+            <div class="flex justify-end">
+                <button onclick="closeModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition">Begrepen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game & Level State
+        let state = {
+            atp: 100,
+            score: 0,
+            currentLevel: 1,
+            unlockedLevel: 1,
+            exploredCount: 0
+        };
+
+        // Organelles Data
+        const organellesData = {
+            membrane: {
+                title: "Celmembraan",
+                tag: "Bescherming & Transport",
+                icon: "🛡️",
+                desc: "Het celmembraan omringt de cel en regelt het transport van stoffen (zoals water en voedingsstoffen) in en uit de cel.",
+                fact: "Bestaat uit een flexibele fosfolipidenlaag met eiwitten."
+            },
+            nucleus: {
+                title: "Celkern (Nucleus)",
+                tag: "De Besturingskamer",
+                icon: "👑",
+                desc: "Bevat het erfelijk materiaal (DNA) en stuurt alle processen en celdelingen in de cel aan.",
+                fact: "In planten- en dierencellen is dit het centrale controlecentrum."
+            },
+            mitochondria: {
+                title: "Mitochondrium",
+                tag: "Energiecentrale",
+                icon: "⚡",
+                desc: "Zorgt voor celademhaling en produceert ATP-energie uit glucose en zuurstof.",
+                fact: "Spiercellen hebben duizenden mitochondriën vanwege hun hoge energiebehoefte."
+            },
+            vacuole: {
+                title: "Vacuole",
+                tag: "Opslag & Stevigheid",
+                icon: "💧",
+                desc: "Grote blaas voor water en opgeloste stoffen. In planten zorgt de turgordruk voor stevigheid.",
+                fact: "Plantencellen hebben vaak één enorme centrale vacuole."
+            },
+            chloroplast: {
+                title: "Bladgroenkorrel (Chloroplast)",
+                tag: "Fotosynthese Fabriek",
+                icon: "🌿",
+                desc: "Vangt zonlicht op om water en CO₂ om te zetten in glucose en zuurstof (komt alleen voor in plantencellen!).",
+                fact: "Dankzij bladgroenkorrels zijn planten groen en kunnen ze zelf voedsel maken."
+            },
+            ribosomes: {
+                title: "Ribosomen & ER",
+                tag: "Eiwitfabriek",
+                icon: "⚙️",
+                desc: "Maken eiwitten op basis van genetische codes. Het Endoplasmatisch Reticulum transporteert deze eiwitten.",
+                fact: "Essentieel voor de opbouw van celstructuren."
+            }
+        };
+
+        // Level Definitions
+        const levelsInfo = {
+            1: {
+                title: "Level 1: De Dierlijke Cel",
+                bannerTitle: "Opdracht Level 1: Verken de dierlijke cel",
+                desc: "Klik op alle kernorganellen van een dierlijke cel (Celmembraan, Celkern, Mitochondrium, Ribosomen).",
+                cellType: 'animal'
+            },
+            2: {
+                title: "Level 2: Functies van de Dierlijke Organellen",
+                bannerTitle: "Opdracht Level 2: Functies toetsen",
+                desc: "Welk organel is verantwoordelijk voor energieproductie? (Bestudeer de mitochondriën en klik op 'Voltooi Level').",
+                cellType: 'animal'
+            },
+            3: {
+                title: "Level 3: De Planten Cel",
+                bannerTitle: "Opdracht Level 3: Ontdek plantenspecifieke onderdelen",
+                desc: "Bekijk de plantencel met de stevige celwand, grote vacuole en chloroplasten (bladgroenkorrels).",
+                cellType: 'plant'
+            },
+            4: {
+                title: "Level 4: Functies van Planten Organellen",
+                bannerTitle: "Opdracht Level 4: Fotosynthese & Stevigheid",
+                desc: "Leer over chloroplasten en vacuolen die zorgen voor fotosynthese en turgordruk in planten.",
+                cellType: 'plant'
+            }
+        };
+
+        // Quiz Questions Database
+        const quizQuestions = [
+            { question: "Welk organel is de energiecentrale van zowel planten- als dierencellen?", options: ["Celkern", "Mitochondrium", "Vacuole", "Chloroplast"], correct: 1 },
+            { question: "Welk onderdeel komt WEL voor in een plantencel, maar NIET in een dierencel?", options: ["Celmembraan", "Celkern", "Bladgroenkorrel (Chloroplast)", "Ribosoom"], correct: 2 },
+            { question: "Wat is de voornaamste taak van de celkern?", options: ["ATP maken", "DNA opslaan en celfuncties aansturen", "Zonlicht opvangen", "Water opslaan"], correct: 1 },
+            { question: "Waarvoor dient de vacuole in een plantencel voornamelijk?", options: ["Wateropslag en stevigheid geven", "Eiwitten bouwen", "Zuurstof verbranden", "Viraal transport"], correct: 0 },
+            { question: "Wat gebeurt er in de chloroplasten?", options: ["Celademhaling", "Fotosynthese", "Celdeling", "Eiwitsynthese"], correct: 1 }
+        ];
+
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+
+        // Level Selection Logic
+        function selectLevel(lvlNum) {
+            if(lvlNum > state.unlockedLevel) {
+                showModal("Level Vergrendeld 🔒", "Voltooi eerst de voorgaande levels om dit level vrij te spelen!");
+                return;
+            }
+
+            state.currentLevel = lvlNum;
+            const info = levelsInfo[lvlNum];
+
+            document.getElementById('current-level-title').innerText = info.title;
+            document.getElementById('banner-title').innerText = info.bannerTitle;
+            document.getElementById('banner-desc').innerText = info.desc;
+
+            // Update level buttons styling
+            for(let i=1; i<=4; i++) {
+                const btn = document.getElementById(`lvl-btn-${i}`);
+                if(i === lvlNum) {
+                    btn.className = "level-card text-left p-3 rounded-xl border border-emerald-500 bg-emerald-500/10 transition";
+                } else if(i <= state.unlockedLevel) {
+                    btn.className = "level-card text-left p-3 rounded-xl border border-slate-700 bg-slate-900 hover:border-emerald-500/50 transition";
+                } else {
+                    btn.className = "level-card text-left p-3 rounded-xl border border-slate-800 bg-slate-950 transition opacity-50";
+                }
+            }
+
+            // Apply cell type configuration
+            applyCellTypeConfig(info.cellType);
+        }
+
+        function applyCellTypeConfig(type) {
+            const cellWallGroup = document.getElementById('cell-wall-group');
+            const chloroplastsGroup = document.getElementById('chloroplasts-group');
+
+            if(type === 'plant') {
+                cellWallGroup.style.display = 'block';
+                chloroplastsGroup.style.display = 'block';
+            } else {
+                cellWallGroup.style.display = 'none';
+                chloroplastsGroup.style.display = 'none';
+            }
+        }
+
+        function completeCurrentLevel() {
+            state.score += 50;
+            state.atp += 25;
+            updateStats();
+
+            if(state.currentLevel < 4) {
+                state.unlockedLevel = Math.max(state.unlockedLevel, state.currentLevel + 1);
+                showModal(`Level ${state.currentLevel} Voltooid! 🎉`, `Gefeliciteerd! Je hebt +50 score en +25 ATP verdiend. Level ${state.currentLevel + 1} is nu ontgrendeld!`);
+                selectLevel(state.currentLevel + 1);
+            } else {
+                showModal("Alle Levels Voltooid! 🏆", "Fantastisch! Je hebt alle 4 de biologie levels met succes doorlopen. Je bent klaar voor het examen!");
+                switchTab('quiz');
+            }
+        }
+
+        // Tab Management
+        function switchTab(tabId) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+            });
+            document.getElementById(`btn-${tabId}`).className = "tab-btn px-4 py-2 rounded-xl text-sm font-medium transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+
+            if(tabId === 'quiz') initQuiz();
+        }
+
+        // Organelle Info Selection
+        function selectOrganelle(key) {
+            const data = organellesData[key];
+            if(!data) return;
+
+            document.getElementById('info-icon').innerText = data.icon;
+            document.getElementById('info-title').innerText = data.title;
+            document.getElementById('info-tag').innerText = data.tag;
+            document.getElementById('info-desc').innerText = data.desc;
+            document.getElementById('info-fact').innerText = "💡 " + data.fact;
+
+            state.exploredCount = Math.min(4, state.exploredCount + 1);
+            document.getElementById('exploration-counter').innerText = `Bekeken organellen: ${state.exploredCount}/4`;
+        }
+
+        function claimOrganelleBonus() {
+            state.atp += 10;
+            state.score += 15;
+            updateStats();
+            showModal("Kennisbonus Ontvangen! ⚡", "+10 ATP en +15 score toegevoegd aan je totaal!");
+        }
+
+        function updateStats() {
+            document.getElementById('atp-display').innerText = state.atp;
+            document.getElementById('score-display').innerText = state.score;
+        }
+
+        function resetGameStats() {
+            state.atp = 100;
+            state.score = 0;
+            state.currentLevel = 1;
+            state.unlockedLevel = 1;
+            updateStats();
+            selectLevel(1);
+            showModal("Spel Gereset", "Alle voortgang en statistieken zijn opnieuw ingesteld op Level 1.");
+        }
+
+        function showModal(title, msg) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = msg;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        // Mini-Game Logic
+        let gameInterval = null;
+        let gameTimerInterval = null;
+        let gameHealth = 100;
+        let timeLeft = 30;
+
+        function startMiniGame() {
+            document.getElementById('game-start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            const playArea = document.getElementById('game-play-area');
+            playArea.classList.remove('hidden');
+            playArea.innerHTML = '';
+
+            gameHealth = 100;
+            timeLeft = 30;
+            document.getElementById('game-health').innerText = gameHealth;
+            document.getElementById('game-timer').innerText = timeLeft;
+
+            gameTimerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('game-timer').innerText = timeLeft;
+                if(timeLeft <= 0 || gameHealth <= 0) endMiniGame(true);
+            }, 1000);
+
+            gameInterval = setInterval(() => {
+                spawnGameObject(playArea);
+            }, 850);
+        }
+
+        function spawnGameObject(container) {
+            if(gameHealth <= 0 || timeLeft <= 0) return;
+            const el = document.createElement('div');
+            const isVirus = Math.random() < 0.38;
+            el.className = `absolute p-3 rounded-2xl cursor-pointer text-xl transition transform hover:scale-125 select-none animate-bounce`;
+            
+            const maxX = container.clientWidth - 50;
+            const maxY = container.clientHeight - 50;
+            el.style.left = Math.max(10, Math.floor(Math.random() * maxX)) + 'px';
+            el.style.top = Math.max(10, Math.floor(Math.random() * maxY)) + 'px';
+
+            if(isVirus) {
+                el.innerHTML = '🦠';
+                el.onclick = () => { state.score += 20; updateStats(); el.remove(); };
+            } else {
+                el.innerHTML = '🍬';
+                el.onclick = () => { state.atp += 5; state.score += 10; updateStats(); el.remove(); };
+            }
+            container.appendChild(el);
+
+            setTimeout(() => {
+                if(el.parentElement) {
+                    el.remove();
+                    if(isVirus) {
+                        gameHealth = Math.max(0, gameHealth - 12);
+                        document.getElementById('game-health').innerText = gameHealth;
+                        if(gameHealth <= 0) endMiniGame(false);
+                    }
+                }
+            }, 2000);
+        }
+
+        function endMiniGame(success) {
+            clearInterval(gameInterval);
+            clearInterval(gameTimerInterval);
+            document.getElementById('game-play-area').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            if(success) {
+                document.getElementById('game-result-title').innerText = 'Missie Geslaagd!';
+                document.getElementById('game-result-desc').innerText = `Cel beschermd! Je hebt extra ATP verdiend. Score: ${state.score}`;
+            } else {
+                document.getElementById('game-result-title').innerText = 'Cel Beschadigd!';
+                document.getElementById('game-result-desc').innerText = 'Te veel virussen! Probeer het nog eens.';
+            }
+        }
+
+        // Quiz Logic
+        function initQuiz() {
+            currentQuizIndex = 0;
+            quizScore = 0;
+            document.getElementById('quiz-complete').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('quiz-total').innerText = quizQuestions.length;
+            loadQuizQuestion();
+        }
+
+        function loadQuizQuestion() {
+            const q = quizQuestions[currentQuizIndex];
+            document.getElementById('quiz-current').innerText = currentQuizIndex + 1;
+            document.getElementById('quiz-question').innerText = q.question;
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            document.getElementById('quiz-next-btn').classList.add('hidden');
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-900 transition text-sm font-medium text-slate-200";
+                btn.innerText = opt;
+                btn.onclick = () => selectQuizAnswer(idx, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectQuizAnswer(selectedIndex, selectedBtn) {
+            const q = quizQuestions[currentQuizIndex];
+            const allBtns = document.getElementById('quiz-options').children;
+            for(let btn of allBtns) btn.disabled = true;
+
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+
+            if(selectedIndex === q.correct) {
+                selectedBtn.className = "w-full text-left p-4 rounded-xl bg-emerald-500/20 border border-emerald-500 text-emerald-300 text-sm font-medium";
+                feedback.className = "p-4 rounded-xl text-sm font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+                feedback.innerText = "✅ Correct!";
+                quizScore++;
+                state.atp += 15;
+                state.score += 25;
+                updateStats();
+            } else {
+                selectedBtn.className = "w-full text-left p-4 rounded-xl bg-rose-500/20 border border-rose-500 text-rose-300 text-sm font-medium";
+                allBtns[q.correct].className = "w-full text-left p-4 rounded-xl bg-emerald-500/20 border border-emerald-500 text-emerald-300 text-sm font-medium";
+                feedback.className = "p-4 rounded-xl text-sm font-medium bg-rose-500/10 border border-rose-500/30 text-rose-400";
+                feedback.innerText = `❌ Juiste antwoord: "${q.options[q.correct]}"`;
+            }
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            currentQuizIndex++;
+            if(currentQuizIndex < quizQuestions.length) {
+                loadQuizQuestion();
+            } else {
+                document.getElementById('quiz-container').classList.add('hidden');
+                document.getElementById('quiz-complete').classList.remove('hidden');
+                document.getElementById('quiz-final-score').innerText = `Je had ${quizScore} van de ${quizQuestions.length} vragen goed! Totaal score: ${state.score}`;
+            }
+        }
+
+        function restartQuiz() { initQuiz(); }
+
+        window.onload = () => {
+            selectLevel(1);
+            selectOrganelle('membrane');
+        };
+    </script>
+</body>
+</html>
